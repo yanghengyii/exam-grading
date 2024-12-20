@@ -10,7 +10,6 @@ static unsigned long long fibonacci(int i) {
     // TODO: 设置正确的循环条件
     std::cout << "cached:" << cache[0] << " " << cache[1] << std::endl;
     for (; i >= cached; ++cached) {
-        std::cout << "cached:" << cached << std::endl;
         cache[cached] = cache[cached - 1] + cache[cached - 2];
     }
     return cache[i];

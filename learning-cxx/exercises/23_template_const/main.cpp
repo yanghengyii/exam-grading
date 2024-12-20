@@ -41,7 +41,6 @@ private:
             }
             index += indices[i] * stride;
         }
-        std::cout << index << std::endl; 
         return index;
     }
 };
