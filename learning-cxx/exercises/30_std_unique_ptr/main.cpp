@@ -1,4 +1,4 @@
-﻿﻿#include "../exercise.h"
+﻿#include "../exercise.h"
 #include <cstring>
 #include <memory>
 #include <string>
@@ -17,7 +17,6 @@ public:
     }
 
     ~Resource() {
-        std::cout << "~Resource: " << _records << std::endl;
         RECORDS.push_back(_records);
     }
 };
@@ -68,8 +67,7 @@ int main(int argc, char **argv) {
     for (auto i = 0; i < 3; ++i) {
         ASSERT(problems[i].size() == answers[i].size(), "wrong size");
         for (auto j = 0; j < problems[i].size(); ++j) {
-            std::cout << problems[i][j].c_str() << std::endl;
-            ASSERT(strcmp(problems[i][j].c_str(), answers[i][j]) == 0, "wrong location");
+            ASSERT(std::strcmp(problems[i][j].c_str(), answers[i][j]) == 0, "wrong location");
         }
     }
 
