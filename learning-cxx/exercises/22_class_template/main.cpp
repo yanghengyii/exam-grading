@@ -1,4 +1,5 @@
-﻿#include "../exercise.h"
+﻿﻿#include "../exercise.h"
+#include <bit>
 
 // READ: 类模板 <https://zh.cppreference.com/w/cpp/language/class_template>
 
@@ -7,11 +8,17 @@ struct Tensor4D {
     unsigned int shape[4];
     T *data;
 
-    Tensor4D(unsigned int const shape_[4], T const *data_) {
-        std::memcpy(shape, shape_, 4 * sizeof(unsigned int));
-        unsigned int size = shape_[0] * shape_[1] * shape_[2] * shape_[3];
+    Tensor4D(unsigned int const (&shape_)[4], T const *data_) {
+        unsigned int size = 1;
+        // TODO: 填入正确的 shape 并计算 size
+        for (auto i = 0u; i < 4; ++i) {
+            shape[i] = shape_[i];
+            size *= shape[i];
+        }
         data = new T[size];
-        std::memcpy(data, data_, size * sizeof(T));
+        for (int i = 0; i < size; i++) {
+            data[i] = data_[i];
+        }
     }
     ~Tensor4D() {
         delete[] data;
@@ -27,33 +34,42 @@ struct Tensor4D {
     // 例如，`this` 形状为 `[1, 2, 3, 4]`，`others` 形状为 `[1, 2, 1, 4]`，
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
-        for (int i = 0; i < 4; ++i) {
-            // 如果维度不匹配，必须是1，或者完全相等
-            if (shape[i] != others.shape[i] && shape[i] != 1 && others.shape[i] != 1) {
-                std::cerr << "Error: shapes are not compatible for broadcasting!" << std::endl;
-                return *this;// 返回自己，可以根据需要抛出异常
+        // TODO: 实现单向广播的加法
+        // 预先存储每个阶是否需要广播
+        bool broadcast[4];
+        for (auto i = 0u; i < 4; ++i) {
+            broadcast[i] = shape[i] != others.shape[i];
+            if (broadcast[i]) {                   // 如果形状不一致就需要广播
+                ASSERT(others.shape[i] == 1, "!");// 单向广播，others 的对应长度必须为 1
             }
         }
 
-        // 进行广播加法
-        unsigned int size = shape[0] * shape[1] * shape[2] * shape[3];
-        for (unsigned int i = 0; i < size; ++i) {
-            unsigned int indices[4];
-            unsigned int temp = i;
-            for (int j = 3; j >= 0; --j) {
-                indices[j] = temp % shape[j];
-                temp /= shape[j];
+
+        auto dst = this->data; // 要加到的元素地址
+        auto src = others.data;// 要加上的元素地址
+        T *marks[4]{src};      // 4 个阶的锚点
+        for (auto i0 = 0u; i0 < shape[0]; ++i0) {
+
+            if (broadcast[0]) src = marks[0];// 如果这个阶是广播的，回到锚点位置
+            marks[1] = src;                  // 记录下一阶锚点
+
+            for (auto i1 = 0u; i1 < shape[1]; ++i1) {
+
+                if (broadcast[1]) src = marks[1];
+                marks[2] = src;
+
+                for (auto i2 = 0u; i2 < shape[2]; ++i2) {
+
+                    if (broadcast[2]) src = marks[2];
+                    marks[3] = src;
+
+                    for (auto i3 = 0u; i3 < shape[3]; ++i3) {
+
+                        if (broadcast[3]) src = marks[3];
+                        *dst++ += *src++;
+                    }
+                }
             }
-
-            unsigned int others_indices[4];
-            for (int j = 0; j < 4; ++j) {
-                others_indices[j] = (others.shape[j] == 1) ? 0 : indices[j];
-            }
-
-            unsigned int index_others = others_indices[0] * others.shape[1] * others.shape[2] * others.shape[3] + others_indices[1] * others.shape[2] * others.shape[3] + others_indices[2] * others.shape[3] + others_indices[3];
-
-            // 广播加法
-            data[i] += others.data[index_others];
         }
         return *this;
     }
